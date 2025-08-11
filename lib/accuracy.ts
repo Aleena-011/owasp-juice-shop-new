@@ -5,7 +5,7 @@
 
 import { type ChallengeKey } from 'models/challenge'
 import logger from './logger'
-import colors from 'colors/safe'
+//import colors from 'colors/safe'
 const solves: Record<string, { 'find it': boolean, 'fix it': boolean, attempts: { 'find it': number, 'fix it': number } }> = {}
 
 type Phase = 'find it' | 'fix it'
@@ -34,6 +34,7 @@ export const totalFixItAccuracy = () => {
   return totalAccuracy('fix it')
 }
 
+// new comment
 export const getFindItAttempts = (challengeKey: ChallengeKey) => {
   return solves[challengeKey] ? solves[challengeKey].attempts['find it'] : 0
 }
@@ -55,7 +56,7 @@ function calculateAccuracy (challengeKey: ChallengeKey, phase: Phase) {
   if (solves[challengeKey][phase]) {
     accuracy = 1 / solves[challengeKey].attempts[phase]
   }
-  logger.info(`Accuracy for '${phase === 'fix it' ? 'Fix It' : 'Find It'}' phase of coding challenge ${colors.cyan(challengeKey)}: ${accuracy > 0.5 ? colors.green(accuracy.toString()) : (accuracy > 0.25 ? colors.yellow(accuracy.toString()) : colors.red(accuracy.toString()))}`)
+//  logger.info(`Accuracy for '${phase === 'fix it' ? 'Fix It' : 'Find It'}' phase of coding challenge ${colors.cyan(challengeKey)}: ${accuracy > 0.5 ? colors.green(accuracy.toString()) : (accuracy > 0.25 ? colors.yellow(accuracy.toString()) : colors.red(accuracy.toString()))}`)
   return accuracy
 }
 
