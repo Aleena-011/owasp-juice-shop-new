@@ -43,29 +43,41 @@ if (!validator.isEmail(email)) {
   return res.status(400).send('Invalid email format')
 }
 
-    models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: UserModel, plain: true }) // vuln-code-snippet vuln-line loginAdminChallenge loginBenderChallenge loginJimChallenge
-      .then((authenticatedUser) => { // vuln-code-snippet neutral-line loginAdminChallenge loginBenderChallenge loginJimChallenge
-        const user = utils.queryResultToJson(authenticatedUser)
-        if (user.data?.id && user.data.totpSecret !== '') {
-          res.status(401).json({
-            status: 'totp_token_required',
-            data: {
-              tmpToken: security.authorize({
-                userId: user.data.id,
-                type: 'password_valid_needs_second_factor_token'
-              })
-            }
+    UserModel.findOne({ where: { email, deletedAt: null } })
+  .then(async (user) => {
+    if (!user) {
+      return res.status(401).send('Invalid email or password.')
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password)
+    if (!passwordMatch) {
+      return res.status(401).send('Invalid email or password.')
+    }
+
+    const authenticatedUser = {
+      data: user,
+      bid: 0
+    }
+
+    if (user.totpSecret !== '') {
+      res.status(401).json({
+        status: 'totp_token_required',
+        data: {
+          tmpToken: security.authorize({
+            userId: user.id,
+            type: 'password_valid_needs_second_factor_token'
           })
-        } else if (user.data?.id) {
-          // @ts-expect-error FIXME some properties missing in user - vuln-code-snippet hide-line
-          afterLogin(user, res, next)
-        } else {
-          res.status(401).send(res.__('Invalid email or password.'))
         }
-      }).catch((error: Error) => {
-        next(error)
       })
-  }
+    } else {
+      afterLogin(authenticatedUser, res, next)
+    }
+  })
+  .catch((error: Error) => {
+    next(error)
+  })
+
+  }  
   // vuln-code-snippet end loginAdminChallenge loginBenderChallenge loginJimChallenge
 
   function verifyPreLoginChallenges (req: Request) {
