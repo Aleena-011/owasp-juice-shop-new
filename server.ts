@@ -49,7 +49,7 @@ import { SecurityAnswerModel } from './models/securityAnswer'
 import { PrivacyRequestModel } from './models/privacyRequests'
 import { SecurityQuestionModel } from './models/securityQuestion'
 
-import logger from './lib/logger'
+//import logger from './lib/logger'
 import * as utils from './lib/utils'
 import * as antiCheat from './lib/antiCheat'
 import * as security from './lib/insecurity'
@@ -125,6 +125,21 @@ import { serveCodeSnippet, checkVulnLines } from './routes/vulnCodeSnippet'
 import { orderHistory, allOrders, toggleDeliveryStatus } from './routes/orderHistory'
 import { continueCode, continueCodeFindIt, continueCodeFixIt } from './routes/continueCode'
 import { ensureFileIsPassed, handleZipFileUpload, checkUploadSize, checkFileType, handleXmlUpload, handleYamlUpload } from './routes/fileUpload'
+
+const logger: winston.Logger = winston.createLogger({
+  level: 'info', // minimum log level
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ level, message, timestamp }) => {
+      return `${timestamp} [${level.toUpperCase()}]: ${message}`
+    })
+  ),
+  transports: [
+    new winston.transports.Console(),                 // logs to terminal
+    new winston.transports.File({ filename: 'security.log' }) // logs to file
+  ]
+})
+logger.info('Application started')
 
 const app = express()
 app.use(helmet())
