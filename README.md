@@ -49,6 +49,14 @@ This project demonstrates security enhancements made to the OWASP Juice Shop app
 
 5. Added Helmet middleware to set secure HTTP headers
 
+6. Basic Logging with Winston
+
+     Winston library installed and configured in the server file.
+     Logs important events both to the console and a file (`security.log`).
+     Logged the application startup to verify logging works.
+     Helps monitor events, debug issues, and maintain a record of critical operations.
+
+
 ### How to Run
 
 1. Clone the repo  
