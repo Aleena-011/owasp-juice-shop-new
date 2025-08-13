@@ -49,7 +49,7 @@ import { SecurityAnswerModel } from './models/securityAnswer'
 import { PrivacyRequestModel } from './models/privacyRequests'
 import { SecurityQuestionModel } from './models/securityQuestion'
 
-//import logger from './lib/logger'
+// import logger from './lib/logger'
 import * as utils from './lib/utils'
 import * as antiCheat from './lib/antiCheat'
 import * as security from './lib/insecurity'
@@ -130,12 +130,14 @@ const logger: winston.Logger = winston.createLogger({
   level: 'info', // minimum log level
   format: winston.format.combine(
     winston.format.timestamp(),
+    // winston.format.printf(({ level, message, timestamp }) => {
+    //   return `${timestamp} [${level.toUpperCase()}]: ${message}`
     winston.format.printf(({ level, message, timestamp }) => {
-      return `${timestamp} [${level.toUpperCase()}]: ${message}`
+      return `${String(timestamp)} [${String(level).toUpperCase()}]: ${String(message)}`
     })
   ),
   transports: [
-    new winston.transports.Console(),                 // logs to terminal
+    new winston.transports.Console(), // logs to terminal
     new winston.transports.File({ filename: 'security.log' }) // logs to file
   ]
 })
