@@ -8,6 +8,7 @@ import * as challengeUtils from '../lib/challengeUtils'
 import { challenges } from '../data/datacache'
 import { UserModel } from '../models/user'
 import * as security from '../lib/insecurity'
+import bcrypt from 'bcrypt' 
 
 export function changePassword () {
   return async ({ query, headers, connection }: Request, res: Response, next: NextFunction) => {
@@ -36,23 +37,26 @@ export function changePassword () {
       return
     }
 
-    if (currentPassword && security.hash(currentPassword) !== loggedInUser.data.password) {
-      res.status(401).send(res.__('Current password is not correct.'))
-      return
-    }
-
     try {
       const user = await UserModel.findByPk(loggedInUser.data.id)
       if (!user) {
         res.status(404).send(res.__('User not found.'))
         return
       }
-
-      await user.update({ password: security.hash(newPasswordInString) })
+ if (currentPassword) {
+    const passwordMatch: boolean = await bcrypt.compare(currentPassword, user.password)
+    if (!passwordMatch) {
+      res.status(401).send(res.__('Current password is not correct.'))
+      return
+    }
+  }
+      const hashedPassword: string = await bcrypt.hash(newPasswordInString, 10)
+      await user.update({ password: hashedPassword })
       challengeUtils.solveIf(
         challenges.changePasswordBenderChallenge,
-        () => user.id === 3 && !currentPassword && user.password === security.hash('slurmCl4ssic')
+        async () => user.id === 3 && !currentPassword && await bcrypt.compare('slurmCl4ssic', user.password)
       )
+
       res.json({ user })
     } catch (error) {
       next(error)

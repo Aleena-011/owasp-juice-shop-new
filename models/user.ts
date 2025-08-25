@@ -4,6 +4,7 @@
  */
 
 /* jslint node: true */
+import bcrypt from 'bcrypt'
 import config from 'config'
 import {
   type InferAttributes,
@@ -72,12 +73,14 @@ const UserModelInit = (sequelize: Sequelize) => { // vuln-code-snippet start wea
           this.setDataValue('email', email)
         }
       }, // vuln-code-snippet hide-end
-      password: {
-        type: DataTypes.STRING,
-        set (clearTextPassword: string) {
-          this.setDataValue('password', security.hash(clearTextPassword)) // vuln-code-snippet vuln-line weakPasswordChallenge
-        }
-      }, // vuln-code-snippet end weakPasswordChallenge
+      
+password: {
+  type: DataTypes.STRING,
+  set (clearTextPassword: string) {
+    const hashedPassword = bcrypt.hashSync(clearTextPassword, 10) // ✅ use bcrypt
+    this.setDataValue('password', hashedPassword)
+  }
+}, // vuln-code-snippet end weakPasswordChallenge
       role: {
         type: DataTypes.STRING,
         defaultValue: 'customer',
