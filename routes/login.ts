@@ -17,6 +17,14 @@ import { UserModel } from '../models/user'
 import { type User } from '../data/types'
 // import * as utils from '../lib/utils'
 
+// -------- Type fix for failed login attempts --------
+interface UsersWithFailedAttempts {
+  failedLoginAttempts: Record<string, number>
+  [key: string]: any
+}
+const typedUsers = users as UsersWithFailedAttempts
+// ---------------------------------------------------
+
 // vuln-code-snippet start loginAdminChallenge loginBenderChallenge loginJimChallenge
 export function login () {
   function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {
@@ -36,6 +44,10 @@ export function login () {
     verifyPreLoginChallenges(req) // vuln-code-snippet hide-line
     const { email, password } = req.body
 
+    if (!typedUsers.failedLoginAttempts[email]) {
+      typedUsers.failedLoginAttempts[email] = 0
+    }
+
     if (!email || !password) {
       return res.status(400).send('Email and password are required')
     }
@@ -47,11 +59,13 @@ export function login () {
     UserModel.findOne({ where: { email, deletedAt: null } })
       .then(async (user) => {
         if (!user) {
+          typedUsers.failedLoginAttempts[email]++  // increment failed attempts
           return res.status(401).send('Invalid email or password.')
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password)
         if (!passwordMatch) {
+          typedUsers.failedLoginAttempts[email]++  // increment failed attempts
           return res.status(401).send('Invalid email or password.')
         }
 
@@ -71,6 +85,7 @@ export function login () {
             }
           })
         } else {
+          typedUsers.failedLoginAttempts[email] = 0
           afterLogin(authenticatedUser, res, next)
         }
       })
