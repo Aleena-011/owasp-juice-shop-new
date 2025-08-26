@@ -173,6 +173,28 @@ const limiter = rateLimit({
 
 app.use(limiter);
 app.use(helmet())
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],             // Only allow resources from my server
+      scriptSrc: ["'self'", "https://trusted.cdn.com"], // Only scripts from my server & CDN
+      styleSrc: ["'self'", "https://trusted.cdn.com"],  // Only styles from my server & CDN
+      imgSrc: ["'self'", "data:"],        // Only images from my server or inline base64
+      connectSrc: ["'self'"],             // Only AJAX/WebSocket calls to my server
+      fontSrc: ["'self'", "https://trusted.cdn.com"],
+      objectSrc: ["'none'"],              // Block Flash/other plugins
+      upgradeInsecureRequests: []         // Automatically upgrade HTTP to HTTPS
+    }
+  })
+);
+app.use(
+  helmet.hsts({
+    maxAge: 31536000, // 1 year in seconds
+    includeSubDomains: true, // Apply HSTS to all subdomains
+    preload: true           // Allow preloading in browsers
+  })
+);
+
 const server = new http.Server(app)
 
 // errorhandler requires us from overwriting a string property on it's module which is a big no-no with esmodules :/
