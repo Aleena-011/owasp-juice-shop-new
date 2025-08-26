@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2025 Bjoern Kimminich & the OWASP Juice Shop contributors.
  * SPDX-License-Identifier: MIT
  */
+import dotenv from 'dotenv';
 import winston from 'winston'
 import i18n from 'i18n'
 import cors from 'cors'
@@ -144,6 +145,33 @@ const logger: winston.Logger = winston.createLogger({
 logger.info('Application started')
 
 const app = express()
+const API_KEY = "supersecret123";
+function checkApiKey(req: Request, res: Response, next: NextFunction): void {
+  const apiKey = req.header("x-api-key");
+  if (apiKey && apiKey === process.env.API_KEY) {
+    next();
+  } else {
+    res.status(401).json({ message: "Unauthorized: Invalid API Key" });
+  }
+}
+
+
+const corsOptions = {
+  origin: "http://localhost:3000", // adjust if your frontend runs somewhere else
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+app.use(cors(corsOptions));
+
+// limit each IP to 100 requests per 15 minutes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests, please try again later."
+});
+
+app.use(limiter);
 app.use(helmet())
 const server = new http.Server(app)
 
@@ -160,6 +188,7 @@ const startupGauge = new Prometheus.Gauge({
   help: `Duration ${appName} required to perform a certain task during startup`,
   labelNames: ['task']
 })
+
 
 // Wraps the function and measures its (async) execution time
 const collectDurationPromise = (name: string, func: (...args: any) => Promise<any>) => {
@@ -196,8 +225,8 @@ restoreOverwrittenFilesWithOriginals().then(() => {
   app.use(compression())
 
   /* Bludgeon solution for possible CORS problems: Allow everything! */
-  app.options('*', cors())
-  app.use(cors())
+  // app.options('*', cors())
+  // app.use(cors())
 
   /* Security middleware */
   app.use(helmet.noSniff())
@@ -657,6 +686,12 @@ restoreOverwrittenFilesWithOriginals().then(() => {
   /* Routes for promotion video page */
   app.get('/promotion', promotionVideo())
   app.get('/video', getVideo())
+
+  // Example protected route with API Key
+app.get("/users", checkApiKey, (req: Request, res: Response) => {
+  res.json({ message: "You accessed a protected route!" });
+});
+
 
   /* Routes for profile page */
   app.get('/profile', security.updateAuthenticatedUsers(), getUserProfile())
