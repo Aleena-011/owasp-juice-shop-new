@@ -62,4 +62,4 @@ export function changePassword () {
       next(error)
     }
   }
-}
+}  
