@@ -172,27 +172,31 @@ const limiter = rateLimit({
 app.use(limiter)
 
 app.use(helmet())
+
+// Content Security Policy (CSP) - allows inline scripts/styles used by Juice Shop
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
-      defaultSrc: ["'self'"],             // Only allow resources from my server
-      scriptSrc: ["'self'", "https://trusted.cdn.com"], // Only scripts from my server & CDN
-      styleSrc: ["'self'", "https://trusted.cdn.com"],  // Only styles from my server & CDN
-      imgSrc: ["'self'", "data:"],        // Only images from my server or inline base64
-      connectSrc: ["'self'"],             // Only AJAX/WebSocket calls to my server
-      fontSrc: ["'self'", "https://trusted.cdn.com"],
-      objectSrc: ["'none'"],              // Block Flash/other plugins
-      upgradeInsecureRequests: []         // Automatically upgrade HTTP to HTTPS
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // needed for inline scripts
+      styleSrc: ["'self'", "'unsafe-inline'"],                  // needed for inline styles
+      imgSrc: ["'self'", "data:", "https:"],                    // images from self, data URI, https
+      fontSrc: ["'self'", "https:", "data:"],
+      connectSrc: ["'self'", "https://*"],                      // API / XHR calls
+      objectSrc: ["'none'"],                                   
+      upgradeInsecureRequests: []                              
     }
   })
-);
+)
+
+// HSTS - enforce HTTPS
 app.use(
   helmet.hsts({
-    maxAge: 31536000, // 1 year in seconds
-    includeSubDomains: true, // Apply HSTS to all subdomains
-    preload: true           // Allow preloading in browsers
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
   })
-);
+)
 
 const server = new http.Server(app)
 
