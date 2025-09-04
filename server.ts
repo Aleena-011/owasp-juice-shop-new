@@ -2,7 +2,7 @@
  * Copyright (c) 2014-2025 Bjoern Kimminich & the OWASP Juice Shop contributors.
  * SPDX-License-Identifier: MIT
  */
-import dotenv from 'dotenv';
+
 import winston from 'winston'
 import i18n from 'i18n'
 import cors from 'cors'
