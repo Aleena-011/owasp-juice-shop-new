@@ -25,6 +25,10 @@ interface UsersWithFailedAttempts {
 const typedUsers = users as UsersWithFailedAttempts
 // ---------------------------------------------------
 
+// -------- Intrusion Detection Config --------
+const MAX_FAILED_ATTEMPTS = 5
+// --------------------------------------------
+
 // vuln-code-snippet start loginAdminChallenge loginBenderChallenge loginJimChallenge
 export function login () {
   function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {
@@ -48,6 +52,12 @@ export function login () {
       typedUsers.failedLoginAttempts[email] = 0
     }
 
+    // 🚨 Block login if too many failed attempts
+    if (typedUsers.failedLoginAttempts[email] >= MAX_FAILED_ATTEMPTS) {
+      console.warn(`ALERT: Multiple failed login attempts detected for ${email} from IP ${req.ip}`)
+      return res.status(429).send('Too many failed login attempts. Please try again later.')
+    }
+
     if (!email || !password) {
       return res.status(400).send('Email and password are required')
     }
@@ -60,12 +70,14 @@ export function login () {
       .then(async (user) => {
         if (!user) {
           typedUsers.failedLoginAttempts[email]++  // increment failed attempts
+          console.warn(`Failed login attempt for non-existing user: ${email} from IP ${req.ip}`)
           return res.status(401).send('Invalid email or password.')
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password)
         if (!passwordMatch) {
           typedUsers.failedLoginAttempts[email]++  // increment failed attempts
+          console.warn(`Failed login attempt for user: ${email} from IP ${req.ip}`)
           return res.status(401).send('Invalid email or password.')
         }
 
@@ -85,7 +97,7 @@ export function login () {
             }
           })
         } else {
-          typedUsers.failedLoginAttempts[email] = 0
+          typedUsers.failedLoginAttempts[email] = 0 // reset on success
           afterLogin(authenticatedUser, res, next)
         }
       })
