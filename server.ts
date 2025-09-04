@@ -30,7 +30,7 @@ import featurePolicy from 'feature-policy'
 import { IpFilter } from 'express-ipfilter'
 // @ts-expect-error FIXME due to non-existing type definitions for express-security.txt
 import securityTxt from 'express-security.txt'
-import { rateLimit } from 'express-rate-limit'
+import rateLimit from 'express-rate-limit'
 import { getStream } from 'file-stream-rotator'
 import type { Request, Response, NextFunction } from 'express'
 
@@ -145,33 +145,32 @@ const logger: winston.Logger = winston.createLogger({
 logger.info('Application started')
 
 const app = express()
-const API_KEY = "supersecret123";
+// Simple API key check (disabled by default to avoid breaking frontend)
 function checkApiKey(req: Request, res: Response, next: NextFunction): void {
-  const apiKey = req.header("x-api-key");
-  if (apiKey && apiKey === process.env.API_KEY) {
-    next();
+  const apiKey = req.header('x-api-key')
+  if (apiKey && apiKey === 'supersecret123') {
+    next()
   } else {
-    res.status(401).json({ message: "Unauthorized: Invalid API Key" });
+    res.status(401).json({ message: 'Unauthorized: Invalid API Key' })
   }
 }
 
-
+// CORS configuration
 const corsOptions = {
-  origin: "http://localhost:3000", // adjust if your frontend runs somewhere else
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: ["Content-Type", "Authorization"]
-};
-
-app.use(cors(corsOptions));
+  origin: 'http://localhost:4200', // change if your frontend runs elsewhere
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}
+app.use(cors(corsOptions))
 
 // limit each IP to 100 requests per 15 minutes
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: "Too many requests, please try again later."
-});
+  message: 'Too many requests, please try again later.'
+})
+app.use(limiter)
 
-app.use(limiter);
 app.use(helmet())
 app.use(
   helmet.contentSecurityPolicy({
